@@ -6,7 +6,7 @@ import traceback
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--particles', type=str, required=True, help='Input particles.star file')
-#parser.add_argument('--class_number', type=int, required=True, help='Specify class number')
+parser.add_argument('--tomoname', type=str, required=True, help='Specify tomogram name')
 #parser.add_argument('--binfactor', type=float, required=True, help='Specify the bin factor')
 args = parser.parse_args()
 
@@ -61,7 +61,7 @@ xyz_cls1 = []
 xyz_cls2 = []
 xyz_cls4 = []
 for i, _ in enumerate(classlist):
-    if df["rlnTomoName"][i] == 'Grid_G3_T3':
+    if df["rlnTomoName"][i] == args.tomoname:
         if df["rlnClassNumber"][i] == 1:
             xyz_cls1.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
         if df["rlnClassNumber"][i] == 2:
@@ -69,7 +69,7 @@ for i, _ in enumerate(classlist):
         if df["rlnClassNumber"][i] == 4:
             xyz_cls4.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
 
-distance_cutoff = 100. # Angstroms
+distance_cutoff = 1000. # Angstroms
 
 points_a_within_cutoff, points_b_within_cutoff = find_points_within_distance(
     a_points=np.array(xyz_cls1, dtype=float), 
@@ -82,14 +82,14 @@ if 0 < len(points_a_within_cutoff):
     xa = points_a_within_cutoff[:, 0]
     ya = points_a_within_cutoff[:, 1]
     za = points_a_within_cutoff[:, 2]
-    tma = ['Grid_G3_T3' for _ in range(len(xa))]
+    tma = [args.tomoname for _ in range(len(xa))]
 
 tmb = []
 if 0 < len(points_b_within_cutoff):
     xb = points_b_within_cutoff[:, 0]
     yb = points_b_within_cutoff[:, 1]
     zb = points_b_within_cutoff[:, 2]
-    tmb = ['Grid_G3_T3' for _ in range(len(xb))]
+    tmb = [args.tomoname for _ in range(len(xb))]
 
 # Output those particles into a star file
 try:
@@ -117,4 +117,5 @@ df2["rlnCoordinateX"] = x
 df2["rlnCoordinateY"] = y
 df2["rlnCoordinateZ"] = z
 
-starfile.write(df2, './neighbor_particles.star', overwrite=True)
+outfilename = 'neighbor_particles_%s.star' %args.tomoname
+starfile.write(df2, outfilename, overwrite=True)
