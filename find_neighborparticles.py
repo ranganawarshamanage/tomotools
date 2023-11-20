@@ -60,13 +60,17 @@ classlist = df["rlnClassNumber"]
 xyz_cls1 = []
 xyz_cls2 = []
 xyz_cls4 = []
+cls_number = []
 for i, _ in enumerate(classlist):
     if df["rlnTomoName"][i] == args.tomoname:
         if df["rlnClassNumber"][i] == 1:
+            cls_number.append(1)
             xyz_cls1.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
         if df["rlnClassNumber"][i] == 2:
+            cls_number.append(2)
             xyz_cls2.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
         if df["rlnClassNumber"][i] == 4:
+            cls_number.append(4)
             xyz_cls4.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
 
 distance_cutoff = 1000. # Angstroms
@@ -116,6 +120,7 @@ df2["rlnTomoName"] = tomoname
 df2["rlnCoordinateX"] = x
 df2["rlnCoordinateY"] = y
 df2["rlnCoordinateZ"] = z
+df2["rlnClassNumber"] = cls_number
 
 outfilename = 'neighbor_particles_%s.star' %args.tomoname
 starfile.write(df2, outfilename, overwrite=True)
