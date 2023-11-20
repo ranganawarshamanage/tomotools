@@ -67,7 +67,6 @@ for i, _ in enumerate(classlist):
             cls_number.append(1)
             xyz_cls1.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
         if df["rlnClassNumber"][i] == 2:
-            cls_number.append(2)
             xyz_cls2.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
         if df["rlnClassNumber"][i] == 4:
             cls_number.append(4)
@@ -81,34 +80,37 @@ points_a_within_cutoff, points_b_within_cutoff = find_points_within_distance(
     c_points=np.array(xyz_cls2, dtype=float), 
     distance_cutoff=distance_cutoff)
 
-tma = []
 if 0 < len(points_a_within_cutoff): 
     xa = points_a_within_cutoff[:, 0]
     ya = points_a_within_cutoff[:, 1]
     za = points_a_within_cutoff[:, 2]
     tma = [args.tomoname for _ in range(len(xa))]
+    cls1_number = [1 for _ in range(len(xa))]
 
-tmb = []
 if 0 < len(points_b_within_cutoff):
     xb = points_b_within_cutoff[:, 0]
     yb = points_b_within_cutoff[:, 1]
     zb = points_b_within_cutoff[:, 2]
     tmb = [args.tomoname for _ in range(len(xb))]
+    cls4_number = [4 for _ in range(len(xb))]
 
 # Output those particles into a star file
 try:
     if 0 < len(tma) and 0 < len(tmb): 
         tomoname = tma + tmb
+        cls_number = cls1_number + cls4_number
         x = xa.tolist() + xb.tolist()
         y = ya.tolist() + yb.tolist()
         z = za.tolist() + zb.tolist()
     elif 0 < len(tma) and not (0 < len(tmb)):
         tomoname = tma
+        cls_number = cls1_number
         x = xa.tolist()
         y = ya.tolist()
         z = za.tolist()
     elif not (0 < len(tma)) and 0 < len(tmb):
         tomoname = tmb
+        cls_number = cls4_number
         x = xb.tolist()
         y = yb.tolist()
         z = zb.tolist()
