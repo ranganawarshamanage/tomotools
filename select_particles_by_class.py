@@ -20,20 +20,29 @@ df = starfile.read(particles)
 x = []
 y = []
 z = []
+rot = []
+tilt = []
+psi = []
 tname = []
 classlist = df["rlnClassNumber"]
 for i, clas in enumerate(classlist):
     if df["rlnClassNumber"][i] == class_number:
         tname.append(df["rlnTomoName"][i])
+        rot.append(df["rlnAngleRot"][i])
+        tilt.append(df["rlnAngleTilt"][i])
+        psi.append(df["rlnAnglePsi"][i])
         x.append(df["rlnCoordinateX"][i] // binfactor)
         y.append(df["rlnCoordinateY"][i] // binfactor)
         z.append(df["rlnCoordinateZ"][i] // binfactor)
 
 df2 = pd.DataFrame()
 df2["rlnTomoName"] = tname #[tomoname for _ in range(len(x))]
-df2["rlnCoordinateX"] = [ix for ix in x]
-df2["rlnCoordinateY"] = [iy for iy in y]
-df2["rlnCoordinateZ"] = [iz for iz in z]
+df2["rlnCoordinateX"] = x
+df2["rlnCoordinateY"] = y
+df2["rlnCoordinateZ"] = z
+df2["rlnAngleRot"] = rot
+df2["rlnAngleTilt"] = tilt
+df2["rlnAnglePsi"] = psi
 df2["rlnClassNumber"] = [class_number for _ in range(len(x))]
 
 starfile.write(df2, path + tname[0]+outfname, overwrite=True)
