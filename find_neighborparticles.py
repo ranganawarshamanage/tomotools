@@ -41,6 +41,68 @@ def find_points_within_distance(a_points, b_points, c_points, distance_cutoff):
     return points_a_within_cutoff, points_b_within_cutoff
 
 
+def select_by_tomoname(df, tname):
+    classlist = df["rlnClassNumber"]
+    xyz_cls1 = []
+    xyz_cls2 = []
+    xyz_cls4 = []
+    for i, _ in enumerate(classlist):
+        if df["rlnTomoName"][i] == tname:
+            if df["rlnClassNumber"][i] == 1:
+                xyz_cls1.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
+            if df["rlnClassNumber"][i] == 2:
+                xyz_cls2.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
+            if df["rlnClassNumber"][i] == 4:
+                xyz_cls4.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
+
+    distance_cutoff = 1000. # Angstroms
+
+    points_a_within_cutoff, points_b_within_cutoff = find_points_within_distance(
+        a_points=np.array(xyz_cls1, dtype=float), 
+        b_points=np.array(xyz_cls4, dtype=float), 
+        c_points=np.array(xyz_cls2, dtype=float), 
+        distance_cutoff=distance_cutoff)
+
+    if 0 < len(points_a_within_cutoff): 
+        xa = points_a_within_cutoff[:, 0]
+        ya = points_a_within_cutoff[:, 1]
+        za = points_a_within_cutoff[:, 2]
+        tma = [args.tomoname for _ in range(len(xa))]
+        cls1_number = [1 for _ in range(len(xa))]
+
+    if 0 < len(points_b_within_cutoff):
+        xb = points_b_within_cutoff[:, 0]
+        yb = points_b_within_cutoff[:, 1]
+        zb = points_b_within_cutoff[:, 2]
+        tmb = [args.tomoname for _ in range(len(xb))]
+        cls4_number = [4 for _ in range(len(xb))]
+
+    # Output those particles into a star file
+    try:
+        if 0 < len(tma) and 0 < len(tmb): 
+            tomoname = tma + tmb
+            cls_number = cls1_number + cls4_number
+            x = xa.tolist() + xb.tolist()
+            y = ya.tolist() + yb.tolist()
+            z = za.tolist() + zb.tolist()
+        elif 0 < len(tma) and not (0 < len(tmb)):
+            tomoname = tma
+            cls_number = cls1_number
+            x = xa.tolist()
+            y = ya.tolist()
+            z = za.tolist()
+        elif not (0 < len(tma)) and 0 < len(tmb):
+            tomoname = tmb
+            cls_number = cls4_number
+            x = xb.tolist()
+            y = yb.tolist()
+            z = zb.tolist()
+    except:
+        print(traceback.exit())
+
+    return x, y, z, cls_number, tomoname
+
+
 # Example usage:
 #a_points = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 #b_points = np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]])
@@ -56,73 +118,39 @@ def find_points_within_distance(a_points, b_points, c_points, distance_cutoff):
 
 # Reading from particles.star file into classes
 df = starfile.read(args.particles)
-classlist = df["rlnClassNumber"]
-xyz_cls1 = []
-xyz_cls2 = []
-xyz_cls4 = []
-cls_number = []
-for i, _ in enumerate(classlist):
-    if df["rlnTomoName"][i] == args.tomoname:
-        if df["rlnClassNumber"][i] == 1:
-            cls_number.append(1)
-            xyz_cls1.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
-        if df["rlnClassNumber"][i] == 2:
-            xyz_cls2.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
-        if df["rlnClassNumber"][i] == 4:
-            cls_number.append(4)
-            xyz_cls4.append([df["rlnCoordinateX"][i], df["rlnCoordinateY"][i], df["rlnCoordinateZ"][i]])
 
-distance_cutoff = 1000. # Angstroms
+uniq_tnames = set(df["rlnTomoName"])
+xlist = []
+ylist = []
+zlist = []
+clslist = []
+tomolist = []
+for tname in uniq_tnames:
+    x, y, z, cls_number, tomoname = select_by_tomoname(df, tname)
 
-points_a_within_cutoff, points_b_within_cutoff = find_points_within_distance(
-    a_points=np.array(xyz_cls1, dtype=float), 
-    b_points=np.array(xyz_cls4, dtype=float), 
-    c_points=np.array(xyz_cls2, dtype=float), 
-    distance_cutoff=distance_cutoff)
+    df2 = pd.DataFrame()
+    df2["rlnTomoName"] = tomoname
+    df2["rlnCoordinateX"] = x
+    df2["rlnCoordinateY"] = y
+    df2["rlnCoordinateZ"] = z
+    df2["rlnClassNumber"] = cls_number
 
-if 0 < len(points_a_within_cutoff): 
-    xa = points_a_within_cutoff[:, 0]
-    ya = points_a_within_cutoff[:, 1]
-    za = points_a_within_cutoff[:, 2]
-    tma = [args.tomoname for _ in range(len(xa))]
-    cls1_number = [1 for _ in range(len(xa))]
+    outfilename = 'neighbor_particles_%s.star' % tname
+    starfile.write(df2, outfilename, overwrite=True)
 
-if 0 < len(points_b_within_cutoff):
-    xb = points_b_within_cutoff[:, 0]
-    yb = points_b_within_cutoff[:, 1]
-    zb = points_b_within_cutoff[:, 2]
-    tmb = [args.tomoname for _ in range(len(xb))]
-    cls4_number = [4 for _ in range(len(xb))]
+    xlist += x
+    ylist += y
+    zlist += z
+    clslist += cls_number
+    tomolist += tomoname
 
-# Output those particles into a star file
-try:
-    if 0 < len(tma) and 0 < len(tmb): 
-        tomoname = tma + tmb
-        cls_number = cls1_number + cls4_number
-        x = xa.tolist() + xb.tolist()
-        y = ya.tolist() + yb.tolist()
-        z = za.tolist() + zb.tolist()
-    elif 0 < len(tma) and not (0 < len(tmb)):
-        tomoname = tma
-        cls_number = cls1_number
-        x = xa.tolist()
-        y = ya.tolist()
-        z = za.tolist()
-    elif not (0 < len(tma)) and 0 < len(tmb):
-        tomoname = tmb
-        cls_number = cls4_number
-        x = xb.tolist()
-        y = yb.tolist()
-        z = zb.tolist()
-except:
-    print(traceback.exit())
+# Output all particles
+df3 = pd.DataFrame()
+df3["rlnTomoName"] = tomolist
+df3["rlnCoordinateX"] = xlist
+df3["rlnCoordinateY"] = ylist
+df3["rlnCoordinateZ"] = zlist
+df3["rlnClassNumber"] = clslist
 
-df2 = pd.DataFrame()
-df2["rlnTomoName"] = tomoname
-df2["rlnCoordinateX"] = x
-df2["rlnCoordinateY"] = y
-df2["rlnCoordinateZ"] = z
-df2["rlnClassNumber"] = cls_number
-
-outfilename = 'neighbor_particles_%s.star' %args.tomoname
+outfilename = 'neighbor_particles.star'
 starfile.write(df2, outfilename, overwrite=True)
