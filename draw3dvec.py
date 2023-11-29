@@ -5,38 +5,6 @@ import starfile
 import pandas as pd
 import argparse
 
-""" # Define the 3D vector
-vector = np.array([1, 2, 3])
-
-# Create a figure and a 3D axis
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-# Plot the 3D vector
-ax.quiver(0, 0, 0, vector[0], vector[1], vector[2], color='r', label='Vector')
-
-# Set axis labels
-ax.set_xlabel('X-axis')
-ax.set_ylabel('Y-axis')
-ax.set_zlabel('Z-axis')
-
-# Set plot limits
-ax.set_xlim([0, max(vector[0], 1.5)])
-ax.set_ylim([0, max(vector[1], 1.5)])
-ax.set_zlim([0, max(vector[2], 1.5)])
-
-# Add a legend
-ax.legend()
-
-# Show the plot
-plt.show() """
-
-
-#################
-""" blues = np.array([[1,2,3], [4,5,6], [7,8,9]])
-reds = np.array([[11,12,13], [14,15,16], [17,18,19]])
-
-vecs = reds - blues """
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--particlefile1', type=str, required=True, help='Input particles.star file')
@@ -88,7 +56,6 @@ angs = np.array(ang_blues)
 
 # Create a figure and a 3D axis
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
 
 selected_vecs = []
 selected_angles = []
@@ -110,17 +77,27 @@ selected_angles = np.deg2rad(np.array(selected_angles))
 # selected_vecs = reds
 # selected_angles = angs
 
-# plot vecs
-#ax.quiver(0, 0, 0, allvecs[:, 0], allvecs[:, 1], allvecs[:, 2], color='b', label='Vectors')
+
+# ================
+# First plot- vecs before rotation 
+# ================
+ax = fig.add_subplot(1,2,1, projection='3d')
 for v, angle in zip(selected_vecs, selected_angles):
     norm_v = v / np.linalg.norm(v)
     ax.plot([0, norm_v[0]], [0, norm_v[1]], [0, norm_v[2]], color='r')
-    # rotate vector by Euler angles
-    print('vec before rotation: ', v)
-    print('Angles: ', angle)
+
+    # Set plot limits
+    ax.set_xlim([-1, 1])
+    ax.set_ylim([-1, 1])
+    ax.set_zlim([-1, 1])
+
+# ================
+# Second plot- vecs after rotation 
+# ================
+ax = fig.add_subplot(1,2,2, projection='3d')
+for v, angle in zip(selected_vecs, selected_angles):
     rm = euler_rotmat(angle)
     v = rm @ v
-    print('vec after rotation: ', v)
     norm_v = v / np.linalg.norm(v)
     ax.plot([0, norm_v[0]], [0, norm_v[1]], [0, norm_v[2]], color='k')
 
